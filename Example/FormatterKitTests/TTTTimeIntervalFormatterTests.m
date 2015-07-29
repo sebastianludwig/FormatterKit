@@ -22,6 +22,7 @@
 - (void)setUp {
     [super setUp];
     self.formatter = [TTTTimeIntervalFormatter new];
+    self.formatter.calendar.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
     self.referenceDate = [NSDate date];
 }
 
