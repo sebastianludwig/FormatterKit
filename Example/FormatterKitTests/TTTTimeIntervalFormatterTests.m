@@ -26,6 +26,17 @@
     self.referenceDate = [NSDate date];
 }
 
+- (NSString *)expressionFromDate:(NSString *)from toDate:(NSString *)to
+{
+    NSDateFormatter *parser = [[NSDateFormatter alloc] init];
+    parser.dateFormat = @"yyyy-MM-dd HH:mm:ss Z";
+    
+    NSDate *fromDate = [parser dateFromString:from];
+    NSDate *toDate = [parser dateFromString:to];
+    
+    return [self.formatter stringForTimeIntervalFromDate:fromDate toDate:toDate];
+}
+
 #pragma mark - suffixes checks
 - (void)checkSuffix:(NSString *)expectedSuffix forTimeInterval:(NSTimeInterval)timeInterval {
 
@@ -94,19 +105,11 @@
 }
 
 #pragma mark - idiomatic deictic expressions
-#pragma mark yesterday
 
 - (NSString *)idiomaticDeicticExpressionFromDate:(NSString *)from toDate:(NSString *)to
 {
-    NSDateFormatter *parser = [[NSDateFormatter alloc] init];
-    parser.dateFormat = @"yyyy-MM-dd HH:mm:ss Z";
-    
-    NSDate *fromDate = [parser dateFromString:from];
-    NSDate *toDate = [parser dateFromString:to];
-    
     self.formatter.usesIdiomaticDeicticExpressions = YES;
-    
-    return [self.formatter stringForTimeIntervalFromDate:fromDate toDate:toDate];
+    return [self expressionFromDate:from toDate:to];
 }
 
 - (NSArray *)generateIdioaticDeicticExpressionsWithStepInterval:(NSDateComponents *)interval count:(NSUInteger)count
@@ -124,6 +127,8 @@
     
     return result;
 }
+
+#pragma mark yesterday
 
 - (void)testYesterdayForLessThan24Hours
 {
@@ -143,6 +148,13 @@
 {
     NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-02-24 01:00:00 +0000"
                                                          toDate:@"2015-02-23 23:30:00 +0000"];
+    XCTAssertEqualObjects(result, @"yesterday");
+}
+
+- (void)testYesterdayAroundMidnightTight
+{
+    NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-02-24 00:00:01 +0000"
+                                                         toDate:@"2015-02-23 23:59:59 +0000"];
     XCTAssertEqualObjects(result, @"yesterday");
 }
 
@@ -297,7 +309,7 @@
 
 - (void)testLastMonth
 {
-    NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-07-17 10:13:00 +0000"
+    NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-07-07 10:13:00 +0000"
                                                          toDate:@"2015-06-19 10:13:00 +0000"];
     XCTAssertEqualObjects(result, @"last month");
 }
@@ -319,7 +331,7 @@
 - (void)testNextMonth
 {
     NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-06-17 10:13:00 +0000"
-                                                         toDate:@"2015-07-19 10:13:00 +0000"];
+                                                         toDate:@"2015-07-09 10:13:00 +0000"];
     XCTAssertEqualObjects(result, @"next month");
 }
 
@@ -340,7 +352,7 @@
 - (void)testLastYear
 {
     NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-07-17 10:13:00 +0000"
-                                                         toDate:@"2014-06-19 10:13:00 +0000"];
+                                                         toDate:@"2014-10-19 10:13:00 +0000"];
     XCTAssertEqualObjects(result, @"last year");
 }
 
@@ -361,7 +373,7 @@
 - (void)testNextYear
 {
     NSString *result = [self idiomaticDeicticExpressionFromDate:@"2015-06-17 10:13:00 +0000"
-                                                         toDate:@"2016-07-19 10:13:00 +0000"];
+                                                         toDate:@"2016-02-19 10:13:00 +0000"];
     XCTAssertEqualObjects(result, @"next year");
 }
 
@@ -375,6 +387,54 @@
     for (NSDictionary *entry in expressions) {
         XCTAssertEqualObjects(entry[@"expression"], @"next year", @"for dates %@ and %@", entry[@"from"], entry[@"to"]);
     }
+}
+
+#pragma mark - days ago
+
+- (void)testTwoDaysAgo
+{
+    NSString *result = [self expressionFromDate:@"2015-02-24 10:13:39 +0000" toDate:@"2015-02-22 15:33:50 +0000"];
+    XCTAssertEqualObjects(result, @"2 days ago");
+}
+
+- (void)testOneDay18HoursAgo
+{
+    self.formatter.numberOfSignificantUnits = 2;
+    
+    NSString *result = [self expressionFromDate:@"2015-02-24 10:13:39 +0000" toDate:@"2015-02-22 15:33:50 +0000"];
+    XCTAssertEqualObjects(result, @"1 day 18 hours ago");
+}
+
+- (void)testTwoDays3HoursAgo
+{
+    self.formatter.numberOfSignificantUnits = 2;
+    
+    NSString *result = [self expressionFromDate:@"2015-02-24 10:13:39 +0000" toDate:@"2015-02-22 6:33:50 +0000"];
+    XCTAssertEqualObjects(result, @"2 days 3 hours ago");
+}
+
+#pragma mark - days from now
+
+- (void)testTwoDaysFromNow
+{
+    NSString *result = [self expressionFromDate:@"2015-02-22 15:33:50 +0000" toDate:@"2015-02-24 10:13:39 +0000"];
+    XCTAssertEqualObjects(result, @"2 days from now");
+}
+
+- (void)testOneDay18HoursFromNow
+{
+    self.formatter.numberOfSignificantUnits = 2;
+    
+    NSString *result = [self expressionFromDate:@"2015-02-22 15:33:50 +0000" toDate:@"2015-02-24 10:13:39 +0000"];
+    XCTAssertEqualObjects(result, @"1 day 18 hours from now");
+}
+
+- (void)testTwoDays3HoursFromNow
+{
+    self.formatter.numberOfSignificantUnits = 2;
+    
+    NSString *result = [self expressionFromDate:@"2015-02-22 6:33:50 +0000" toDate:@"2015-02-24 10:13:39 +0000"];
+    XCTAssertEqualObjects(result, @"2 days 3 hours from now");
 }
 
 #pragma mark - other
