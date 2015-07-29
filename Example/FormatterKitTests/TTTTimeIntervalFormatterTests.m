@@ -25,10 +25,6 @@
     self.referenceDate = [NSDate date];
 }
 
-- (void)tearDown {
-    [super tearDown];
-}
-
 #pragma mark - suffixes checks
 - (void)checkSuffix:(NSString *)expectedSuffix forTimeInterval:(NSTimeInterval)timeInterval {
 
