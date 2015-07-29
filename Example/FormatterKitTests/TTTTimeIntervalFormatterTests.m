@@ -167,8 +167,6 @@
     XCTAssertNotEqualObjects(result, @"yesterday");
 }
 
-// TODO: test if day not significant unit
-
 #pragma mark tomorrow
 
 - (void)testTomorrowForLessThan24Hours
